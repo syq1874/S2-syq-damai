@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>员工管理</title>
+<link rel="stylesheet" type="text/css"
+	href="easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="easyui/themes/icon.css">
+<script type="text/javascript" src="easyui/jquery.min.js"></script>
+<script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="easyui/locale/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="../js/axios.min.js"></script>
+<style type="text/css">
+input{
+	width: 200px
+}
+</style>
+<script type="text/javascript">
+	
+	//图片字段的格式化方法
+	function fmtImg(value, row, index) {
+		//  <img height='100px' src='../products/1/cs10001.jpg'>   
+		return "<img height='100px' src='../"+value+"'>";
+	}
+	
+	// 出版时间字段的格式化方法
+	function fmtDate(date){
+		var y = date.getFullYear();
+		var m = date.getMonth()+1;
+		var d = date.getDate();
+		return y + "-" + m + '-' + d;
+	}
+	
+	
+	function query(){
+		$('#dg').datagrid('load',{
+			name: $("#name").textbox('getValue'),
+			did: $("#did").textbox('getValue'),
+		});
+	}
+	
+	// 操作字段的格式化方法
+	function fmtOp(value, row, index) {
+		return "<button onclick='edit1("+index+")'>修改</button> ";
+	}
+	
+	// 打开修改窗口
+	function edit(index) {
+		
+		$("#dd").dialog('open');
+		
+		if(index != undefined){
+			var rows = $('#dg').datagrid("getRows");
+			upImg.src = "../"+rows[index].image;
+			$('#ff').form('load',rows[index]);
+		}else{
+			$('#ff').form('clear');
+		}
+	}
+	
+	function edit1(index){
+		var rows = $('#dg').datagrid("getRows");
+		$("#dd1").dialog('open');
+		$('#ff1').form('load',rows[index]);
+	}
+	
+	function save() {
+		$('#ff').form('submit',{
+			url : "../user.do",
+			onSubmit: function(param){
+				//  扩展请求参数
+				param.op = "save";
+			},
+			success : res=>{
+				res = JSON.parse(res);
+				alert(res.msg);
+				if(res.code == 1 ){
+					// 关闭窗口
+					$("#dd").dialog('close');
+					// 刷新表格
+					$('#dg').datagrid("reload");
+				}
+			}
+		});
+	}
+	
+	function save1() {
+		$('#ff1').form('submit',{
+			url : "../user.do",
+			onSubmit: function(param){
+				//  扩展请求参数
+				param.op = "save1";
+			},
+			success : res=>{
+				res = JSON.parse(res);
+				alert(res.msg);
+				if(res.code == 1 ){
+					// 关闭窗口
+					$("#dd1").dialog('close');
+					// 刷新表格
+					$('#dg').datagrid("reload");
+				}
+			}
+		});
+	}
+	
+	
+	
+	function upload(newValue,oldValue){
+		var url= "../UploadServlet";
+		var fd =new FormData(ff1);
+		axios.post( url, fd).then(res=>{
+			alert(res.data.msg);
+			if(res.data.code){
+				// upImg 是原生的 html 控件对象
+				upImg.src = "../" + res.data.data;
+				// tbImg 是Easyui的 控件对象
+				$("#tbImg").textbox('setValue',res.data.data);
+			}
+		});
+	}
+	
+</script>
+</head>
+<body>
+	<div class="easyui-layout" data-options="fit:true">
+		<div data-options="region:'north'" style="height: 50px;">
+				<!-- prompt="书名:"  ==  data-options="prompt:'书名:'" -->
+			<div style="height: 50px; margin: 10px">
+			<input class="easyui-textbox" label="姓名:" style="width:200px" id="name">
+			<input class="easyui-combobox" label="部门:" style="width:200px" id="did"
+				data-options="url:'../department.do?op=query', valueField:'id', textField:'dname'">
+			<a id="btn" href="#" class="easyui-linkbutton"
+				data-options="iconCls:'icon-search'"
+				onclick="query()">查询</a>
+			<a id="btn" href="#" class="easyui-linkbutton"
+				data-options="iconCls:'icon-add'"
+				onclick="edit()">添加</a>
+				<!-- <a id="btn" href="../login.html" class="easyui-linkbutton">返回</a> -->
+			</div>
+		</div>
+		<div data-options="region:'center',title:'查询结果', iconCls:'icon-ok'">
+			<table class="easyui-datagrid" id="dg"
+				data-options="
+				url:'../user.do?op=queryByUser',
+				<!-- url:'../GetLoginedUserServlet.do?op=queryByUser', -->
+				method:'get',
+				border:false,
+				singleSelect:true,
+				fit:true,
+				fitColumns:true,
+				pagination:true">
+				<thead>
+					<tr>
+						<th data-options="field:'id', width:20">编号</th>
+						<th data-options="field:'name', width:35">姓名</th>
+						<th data-options="field:'uname', width:35">用户名</th>
+						<th data-options="field:'sex', width:20">性别</th>
+						<th data-options="field:'datetime', width:100">入职时间</th>
+						<th data-options="field:'education', width:50">学历</th>
+						<th data-options="field:'dname', width:50">部门</th>
+						<th data-options="field:'image', width:75, formatter:fmtImg">图片</th>
+						<th data-options="field:'telephone', width:65">联系电话</th>
+						<th data-options="field:'address', width:50">地址</th>
+						<th data-options="field:'cardid', width:100">身份证号码</th>
+						<th data-options="field:'idd', width:50, formatter:fmtOp,align:'center'">操作</th>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+	
+	<!-- 图书编辑窗口 -->
+	<div id="dd" class="easyui-dialog" title="新增员工" style="width:300px;height:300px;"
+	    data-options="
+	    iconCls:'icon-save',
+	    resizable:true,
+	    modal:true,
+	    closed:true,
+	    buttons:'#bb'">
+	    <form id="ff">
+	    <input class="easyui-textbox" name="id"  label="编号" type="hidden"><br>
+		<input class="easyui-textbox" name="name" label="姓名"><br>
+		<input class="easyui-textbox" name="uname" label="用户名"><br>
+		<input class="easyui-combobox" name="did" label="部门"
+			data-options="url:'../department.do?op=query', valueField:'id', textField:'dname'"><br>
+		<input class="easyui-passwordbox" name="password" label="密码"><br>
+		<input class="easyui-numberbox" name="cardid" label="身份证号码"><br>
+		
+		</form>
+	</div>
+	<div id="bb">
+		<a href="#" class="easyui-linkbutton" onclick="save()">保存</a>
+		<a href="#" class="easyui-linkbutton">放弃</a>
+	</div>
+	
+	<!-- 修改窗口 -->
+	<div id="dd1" class="easyui-dialog" title="修改员工信息" style="width:500px;height:560px;"
+	    data-options="
+	    iconCls:'icon-save',
+	    resizable:true,
+	    modal:true,
+	    closed:true,
+	    buttons:'#bb1'">
+	    <form id="ff1">
+	    <input class="easyui-textbox" name="id" label="编号" type="hidden"><br>
+		<input class="easyui-textbox" name="name" label="姓名"><br>
+		<input class="easyui-textbox" name="uname" label="用户名"><br>
+		<input class="easyui-textbox" name="sex" label="性别"><br>
+		<input class="easyui-passwordbox" name="password" label="密码"><br>
+		<input class="easyui-datebox" name="datetime" label="入职时间"><br>
+		<input class="easyui-textbox" name="education" label="学历"><br>
+		<input class="easyui-combobox" name="did" label="部门"
+			data-options="url:'../department.do?op=query', valueField:'id', textField:'dname'"><br>
+		<input class="easyui-numberbox" name="telephone" label="电话号码"><br>
+		<input class="easyui-textbox" name="address" label="地址"><br>
+		<input class="easyui-numberbox" name="cardid" label="身份证号码"><br>
+		<input class="easyui-textbox" name="image" label="图片" id="tbImg" type="hidden"><br>
+		<input class="easyui-filebox" label="选择" id="file" name="file"
+			data-options="onChange:upload"><br>
+		<img alt="" src="../products/1/cs60003.png" height="100px" id="upImg"
+			onclick="filebox_file_id_1.click()">
+		</form>
+	</div>
+	<div id="bb1">
+		<a href="#" class="easyui-linkbutton" onclick="save1()">保存</a>
+		<a href="#" class="easyui-linkbutton">放弃</a>
+	</div>
+	
+	
+	
+</body>
+</html>
